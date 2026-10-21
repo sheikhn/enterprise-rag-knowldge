@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LLM Context Amplification & Agent Cost Calculator</title>
+<meta name="description" content="Interactive estimator for LLM agent session token amplification, caching, and deterministic workflow savings.">
+<style>
+:root{font:16px system-ui,-apple-system,Segoe UI,sans-serif;color:#edf3ff;background:#0a1220;color-scheme:dark}*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:28px 18px 64px}h1{font-size:clamp(1.8rem,4vw,2.8rem);margin:8px 0}h2{font-size:1.2rem}p,small{color:#aebfd8;line-height:1.55}.eyebrow{color:#86bcff;font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.75rem}.panel{border:1px solid #2c3e5b;background:#142139;border-radius:18px;padding:22px;margin:20px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.metric{background:#0d192c;border:1px solid #2c3e5b;border-radius:12px;padding:16px}.metric strong{display:block;font-size:clamp(1.1rem,2.5vw,1.8rem);margin-top:8px}.metric small{font-size:.8rem}label{display:block;font-size:.82rem;font-weight:650;color:#c1d1e7;margin-bottom:6px}input,select{width:100%;border-radius:9px;background:#0b1628;border:1px solid #456080;padding:10px;color:white;font:inherit}input:focus,select:focus,button:focus-visible{outline:2px solid #8fc2ff;outline-offset:2px}.field small{font-size:.74rem}.actions{display:flex;gap:10px;flex-wrap:wrap}button{border:1px solid #5374a0;background:#1e3657;color:white;padding:10px 14px;border-radius:9px;cursor:pointer;font-weight:650}.primary{background:#2966c2}.bars{display:grid;gap:12px}.barlabel{display:flex;justify-content:space-between;gap:12px;font-size:.85rem}.track{height:16px;background:#0b1628;border-radius:12px;overflow:hidden}.fill{height:100%;background:#60a5fa;width:0;transition:width .2s}.fill.green{background:#34d399}.fill.amber{background:#fbbf24}.note{border-left:3px solid #60a5fa;padding:8px 14px;background:#0d192c}.foot{font-size:.8rem}@media(max-width:750px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:430px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr}}
+</style></head><body><main>
+<div class="eyebrow">Enterprise AI economics · Interactive research tool</div>
+<h1>The Context Amplification Problem</h1>
+<p>Estimate the cost of repeated large-context agent calls—and compare against a deterministic-first enterprise workflow with cache reuse and selective LLM summarization. All calculations run in your browser.</p>
+<section class="panel"><h2>1 · Agent session assumptions</h2><div class="grid">
+<div class="field"><label for="context">Average input context per call (K tokens)</label><input id="context" type="number" min="1" max="2000" value="150"></div>
+<div class="field"><label for="calls">LLM calls per request</label><input id="calls" type="number" min="1" max="10000" value="100"></div>
+<div class="field"><label for="output">Average output tokens per call</label><input id="output" type="number" min="0" max="1000000" value="1500"></div>
+<div class="field"><label for="inprice">Input price ($ / 1M tokens)</label><input id="inprice" type="number" min="0" step=".01" value="5"></div>
+<div class="field"><label for="outprice">Output price ($ / 1M tokens)</label><input id="outprice" type="number" min="0" step=".01" value="25"></div>
+<div class="field"><label for="cached">Cached input fraction (%)</label><input id="cached" type="number" min="0" max="100" value="0"></div>
+<div class="field"><label for="discount">Cached input discount (%)</label><input id="discount" type="number" min="0" max="100" value="90"><small>Discount relative to uncached input rate; illustrative.</small></div>
+<div class="field"><label for="requests">Requests per month</label><input id="requests" type="number" min="1" max="100000000" value="1000"></div>
+<div class="field"><label for="human">Human baseline minutes per request</label><input id="human" type="number" min="0" step=".5" value="20"></div>
+</div></section>
+<section class="panel"><h2>2 · Reuse-first architecture assumptions</h2><div class="grid">
+<div class="field"><label for="known">Known-workflow requests (%)</label><input id="known" type="number" min="0" max="100" value="80"></div>
+<div class="field"><label for="hit">Result cache hit rate within known requests (%)</label><input id="hit" type="number" min="0" max="100" value="50"></div>
+<div class="field"><label for="execution">Deterministic execution cost per cache miss ($)</label><input id="execution" type="number" min="0" step=".001" value=".02"></div>
+<div class="field"><label for="lookup">Gateway + retrieval cost per request ($)</label><input id="lookup" type="number" min="0" step=".001" value=".005"></div>
+<div class="field"><label for="summary">Known-workflow requests requiring LLM summary (%)</label><input id="summary" type="number" min="0" max="100" value="25"></div>
+<div class="field"><label for="summaryin">Summary input tokens</label><input id="summaryin" type="number" min="0" value="2500"></div>
+<div class="field"><label for="summaryout">Summary output tokens</label><input id="summaryout" type="number" min="0" value="500"></div>
+<div class="field"><label for="monthly">Capability platform monthly fixed cost ($)</label><input id="monthly" type="number" min="0" value="500"></div>
+<div class="field"><label for="novel">Novel requests agent cost multiplier</label><input id="novel" type="number" min="0" step=".1" value="1"><small>1 = same agent session cost as baseline.</small></div>
+</div></section>
+<section class="panel"><h2>3 · Estimated economics</h2><div class="metrics">
+<div class="metric"><small>Agent cost / request</small><strong id="session">$0</strong></div>
+<div class="metric"><small>LLM-first / month</small><strong id="baseline">$0</strong></div>
+<div class="metric"><small>Reuse-first / month</small><strong id="optimized">$0</strong></div>
+<div class="metric"><small>Net monthly savings</small><strong id="savings">$0</strong></div>
+<div class="metric"><small>Input tokens / agent request</small><strong id="tokens">0</strong></div>
+<div class="metric"><small>Gross input token amplification</small><strong id="amplification">0×</strong></div>
+<div class="metric"><small>Known workflow executions avoided / month</small><strong id="avoided">0</strong></div>
+<div class="metric"><small>Net savings (%)</small><strong id="percentage">0%</strong></div>
+</div><h2>Cost composition</h2><div class="bars">
+<div><div class="barlabel"><span>LLM-first</span><span id="btxt"></span></div><div class="track"><div id="bbar" class="fill amber"></div></div></div>
+<div><div class="barlabel"><span>Reuse-first</span><span id="otxt"></span></div><div class="track"><div id="obar" class="fill green"></div></div></div></div>
+<p class="note" id="explain"></p>
+<div class="actions"><button class="primary" id="share">Copy scenario link</button><button id="csv">Export scenario CSV</button><button id="reset">Reset assumptions</button></div>
+</section>
+<p class="foot">Method: baseline agent cost = calls × [(input tokens × blended input rate) + (output tokens × output rate)]. Reuse-first cost = all gateway lookups + known-workflow cache misses × execution cost + selected summaries × summary model cost + novel requests × baseline agent cost × multiplier + monthly platform fixed cost. The cache-hit rate applies only to known-workflow requests. Cache savings assume correct authorization and freshness checks. Human time is shown as an input for future comparative analysis; it is not monetized here. Excludes latency, engineering amortization beyond the fixed-cost input, provider-specific cache write fees, tiered pricing, and tax. Prices are user-supplied assumptions, not live vendor quotes.</p>
+</main><script>
+const ids=['context','calls','output','inprice','outprice','cached','discount','requests','human','known','hit','execution','lookup','summary','summaryin','summaryout','monthly','novel'];
+const defaults=Object.fromEntries(ids.map(id=>[id,document.getElementById(id).value]));
+const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:n<10?3:2}).format(n);
+const num=n=>new Intl.NumberFormat('en-US',{maximumFractionDigits:1}).format(n);
+const val=id=>Math.max(0,Number(document.getElementById(id).value)||0);
+function calculate(){
+const v=Object.fromEntries(ids.map(id=>[id,val(id)]));
+const fraction=Math.min(1,v.cached/100),discount=Math.min(1,v.discount/100);
+const blended=v.inprice*(1-fraction*discount);
+const input=v.context*1000*v.calls;
+const output=v.output*v.calls;
+const session=(input*blended+output*v.outprice)/1e6;
+const baseline=session*v.requests;
+const known=v.requests*Math.min(1,v.known/100);
+const novel=v.requests-known;
+const hits=known*Math.min(1,v.hit/100);
+const misses=known-hits;
+const summaries=known*Math.min(1,v.summary/100);
+const summaryCost=(v.summaryin*blended+v.summaryout*v.outprice)/1e6;
+const optimized=v.requests*v.lookup+misses*v.execution+summaries*summaryCost+novel*session*v.novel+v.monthly;
+const savings=baseline-optimized;
+const pct=baseline?100*savings/baseline:0;
+const values={session:money(session),baseline:money(baseline),optimized:money(optimized),savings:money(savings),tokens:num(input),amplification:num(v.calls)+'×',avoided:num(hits),percentage:num(pct)+'%',btxt:money(baseline),otxt:money(optimized)};
+Object.entries(values).forEach(([id,t])=>document.getElementById(id).textContent=t);
+const max=Math.max(baseline,optimized,1);
+document.getElementById('bbar').style.width=100*baseline/max+'%';
+document.getElementById('obar').style.width=100*optimized/max+'%';
+document.getElementById('explain').textContent=(savings>=0?'Savings scenario: ':'Cost increase scenario: ')+num(known)+' known-workflow requests, '+num(hits)+' authorized cache hits, '+num(misses)+' deterministic executions, '+num(novel)+' novel requests routed to the agent, and '+num(summaries)+' optional summaries per month.';
+const p=new URLSearchParams();ids.forEach(id=>p.set(id,document.getElementById(id).value));history.replaceState(null,'',location.pathname+'?'+p.toString());
+return {v,session,baseline,optimized,savings,pct,known,novel,hits,misses,summaries};
+}
+const params=new URLSearchParams(location.search);ids.forEach(id=>{if(params.has(id))document.getElementById(id).value=params.get(id);document.getElementById(id).addEventListener('input',calculate)});
+document.getElementById('reset').onclick=()=>{ids.forEach(id=>document.getElementById(id).value=defaults[id]);calculate()};
+document.getElementById('share').onclick=async()=>{const url=location.href;try{await navigator.clipboard.writeText(url);document.getElementById('share').textContent='Copied!';setTimeout(()=>document.getElementById('share').textContent='Copy scenario link',1500)}catch{prompt('Copy this link',url)}};
+document.getElementById('csv').onclick=()=>{const r=calculate();const rows=[['metric','value'],...ids.map(id=>[id,r.v[id]]),...['session','baseline','optimized','savings','pct','known','novel','hits','misses','summaries'].map(k=>[k,r[k]])];const csv=rows.map(x=>x.join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='context-amplification-scenario.csv';a.click();URL.revokeObjectURL(a.href)};
+calculate();
+</script></body></html>

@@ -17,8 +17,17 @@ calculators/
   context-amplification.html
 docs/
   architecture.md
+  ekh-contract.md
+examples/
+  ekh/
+    simulation-report.yaml
 README.md
 ```
+
+## Enterprise Knowledge Hub (EKH)
+
+- **[EKH Contract v0.1 proposal](docs/ekh-contract.md)** — agent-independent organizational asset discovery, invocation and SDLC publishing contract.
+- **[Example EKH workflow manifest](examples/ekh/simulation-report.yaml)** — simulation regression report with JSON Schema I/O and an MCP execution binding (illustrative only).
 
 ## Calculator methodology
 

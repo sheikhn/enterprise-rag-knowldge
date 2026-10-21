@@ -1,0 +1,49 @@
+# EKH Contract v0.1 — illustrative, not an implemented service
+# Publish only after enterprise SDLC, security and release approval.
+apiVersion: ekh.org/v0.1
+kind: Capability
+metadata:
+  id: engineering.performance.simulation-report
+  name: Simulation Performance Report
+  version: 1.0.0
+  owner: performance-engineering
+  description: Generate a regression report for a simulation.
+  tags: [performance, simulation, regression]
+  intents:
+    - analyze simulation performance
+    - generate simulation regression report
+spec:
+  type: workflow
+  lifecycle: approved # Example state, not an actual approval
+  access:
+    classification: internal
+    requiredScopes: [simulation:read, metrics:read]
+  interface:
+    inputSchema:
+      type: object
+      additionalProperties: false
+      required: [simulationId]
+      properties:
+        simulationId: {type: string}
+        baselineId: {type: string}
+    outputSchema:
+      type: object
+      required: [reportUri, status]
+      properties:
+        reportUri: {type: string, format: uri}
+        status:
+          type: string
+          enum: [completed, failed]
+  invocation:
+    protocol: mcp
+    endpointRef: mcp://performance-tools
+    operation: generate_simulation_report
+    mode: async
+  source:
+    repository: https://git.example.org/performance/simulation-report
+    revision: v1.0.0
+  dependencies:
+    - assetId: data.simulation.executions
+      versionConstraint: ">=2.0.0 <3.0.0"
+  governance:
+    validationRef: ci://performance/simulation-report/1.0.0
